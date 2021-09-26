@@ -11,8 +11,7 @@ const NewBook = (props) => {
 
   const [addBook] = useMutation(ADD_BOOK, {
     refetchQueries: [{ query: ALL_BOOKS }, {query: ALL_AUTHORS}]
-  }
-  )
+  })
 
   if (!props.show) {
     return null
@@ -22,8 +21,6 @@ const NewBook = (props) => {
     event.preventDefault()
 
     console.log('add book...')
-    //published = +published
-    console.log(published)
     addBook({ variables: { title, author, published: parseInt(published), genres } })
     setTitle('')
     setPublished('')
