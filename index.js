@@ -1,6 +1,18 @@
+require('dotenv').config()
 const { ApolloServer, gql } = require('apollo-server')
 const { UniqueDirectiveNamesRule } = require('graphql')
+const mongoose = require('mongoose')
+const Author = require('./models/author')
+const Book = require('./models/book')
 
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log('connected to MongoDB')
+  })
+  .catch((error) => {
+    console.log('error connection to MongoDB:', error.message)
+  })
+/*
 let authors = [
   {
     name: 'Robert Martin',
@@ -27,10 +39,9 @@ let authors = [
   },
 ]
 
-/*
+
  * Saattaisi olla järkevämpää assosioida kirja ja sen tekijä tallettamalla kirjan yhteyteen tekijän nimen sijaan tekijän id
  * Yksinkertaisuuden vuoksi tallennamme kuitenkin kirjan yhteyteen tekijän nimen
-*/
 
 let books = [
   {
@@ -83,16 +94,16 @@ let books = [
     genres: ['classic', 'revolution']
   },
 ]
-
+*/
 const typeDefs = gql`
   
-  type Book {
-    title: String!
-    author: String!
-    published: Int!
-    genres: [String!]
-    id: ID!
-  }
+type Book {
+  title: String!
+  published: Int!
+  author: Author!
+  genres: [String!]!
+  id: ID!
+}
 
   type Author {
     name: String!
@@ -124,34 +135,44 @@ type Query {
 
 const resolvers = {
   Query: {
-    bookCount: () => books.length,
-    authorCount: () => authors.length,
-    allBooks: (root, args) => {
+    bookCount: () => Book.collection.countDocuments(),
+    authorCount: () => Author.collection.countDocuments(),
+    allBooks: async (root, args) => {
+
       if (!args.genre && !args.author) {
-        return books
+        return await Book.find({})
       }
+      /*
       else if (!args.genre) {
         return books.filter(p => p.author === args.author)
       }
-      else if (!args.author) {
-        return books.filter(p => p.genres.includes(args.genre))
+      */
+      else {
+        return await Book.find({ genres: { $in: [args.genre] } })
+        books.filter(p => p.genres.includes(args.genre))
       }
+      /*
       else {
         let tempArray = books.filter(p => p.author === args.author)
         return tempArray.filter(p => p.genres.includes(args.genre))
       }
+      */
     },
-    allAuthors: () => authors
+    allAuthors: async () => await Author.find({})
   },
   Author: {
     name: (root) => root.name,
     id: (root) => root.id,
     born: (root) => root.born,
-    bookCount: (root) => books.map(p => p.author === root.name).filter(Boolean).length
+    bookCount: async (root) => {
+      const length = await Book.find({ author: root.id })
+      return length.length
+    }
   },
   Mutation: {
     addBook: (root, args) => {
-      const book = { ...args, id: Math.floor(Math.random() * 1000000) }
+      const book = new Book({ ...args, id: Math.floor(Math.random() * 1000000) })
+      /*
       books = books.concat(book)
 
       if (authors.map(p => p.name === book.author).includes(true)) {
@@ -163,10 +184,19 @@ const resolvers = {
           id: Math.floor(Math.random() * 1000000)
         }
         authors = authors.concat(newAuthor)
-        return book
-      }
+        */
+      return book.save()
+
     },
-    editAuthor: (root, args) => {
+    editAuthor: async (root, args) => {
+      const editedAuthor = await Author.findOne({ name: args.name })
+      editedAuthor.born = args.setBornTo
+      try {
+        return await editedAuthor.save()
+      } catch (err) {
+        console.log(err)
+      }
+      /*
       const editedAuthor = authors.find(p => p.name === args.name)
       if (!editedAuthor) {
         return null
@@ -174,6 +204,7 @@ const resolvers = {
       const updatedAuthor = { ...editedAuthor, born: args.setBornTo }
       authors = authors.map(p => p.name === args.name ? updatedAuthor : p)
       return updatedAuthor
+      */
     }
   }
 }
