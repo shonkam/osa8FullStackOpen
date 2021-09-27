@@ -1,5 +1,5 @@
 require('dotenv').config()
-const { ApolloServer, gql } = require('apollo-server')
+const { ApolloServer, gql, UserInputError } = require('apollo-server')
 const { UniqueDirectiveNamesRule } = require('graphql')
 const mongoose = require('mongoose')
 const Author = require('./models/author')
@@ -140,7 +140,13 @@ const resolvers = {
     allBooks: async (root, args) => {
 
       if (!args.genre && !args.author) {
-        return await Book.find({})
+        try {
+          return await Book.find({})
+        } catch (err) {
+          throw new UserInputError(err.message, {
+            invalidArgs: args,
+          })
+        }
       }
       /*
       else if (!args.genre) {
@@ -148,8 +154,13 @@ const resolvers = {
       }
       */
       else {
-        return await Book.find({ genres: { $in: [args.genre] } })
-        books.filter(p => p.genres.includes(args.genre))
+        try {
+          return await Book.find({ genres: { $in: [args.genre] } })
+        } catch (err) {
+          throw new UserInputError(err.message, {
+            invalidArgs: args,
+          })
+        }
       }
       /*
       else {
@@ -170,8 +181,9 @@ const resolvers = {
     }
   },
   Mutation: {
-    addBook: (root, args) => {
+    addBook: async (root, args) => {
       const book = new Book({ ...args, id: Math.floor(Math.random() * 1000000) })
+
       /*
       books = books.concat(book)
 
@@ -185,7 +197,14 @@ const resolvers = {
         }
         authors = authors.concat(newAuthor)
         */
-      return book.save()
+      try {
+        return await book.save()
+      } catch (err) {
+        throw new UserInputError(err.message, {
+          invalidArgs: args,
+        })
+      }
+
 
     },
     editAuthor: async (root, args) => {
@@ -194,7 +213,9 @@ const resolvers = {
       try {
         return await editedAuthor.save()
       } catch (err) {
-        console.log(err)
+        throw new UserInputError(err.message, {
+          invalidArgs: args,
+        })
       }
       /*
       const editedAuthor = authors.find(p => p.name === args.name)
