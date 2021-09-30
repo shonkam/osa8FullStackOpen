@@ -167,7 +167,8 @@ const resolvers = {
 
       if (!args.genre && !args.author) {
         try {
-          return await Book.find({})
+          const res = await Book.find({})
+          return res
         } catch (err) {
           throw new UserInputError(err.message, {
             invalidArgs: args,
@@ -197,6 +198,19 @@ const resolvers = {
     },
     allAuthors: async () => await Author.find({}),
     me: async (root, args, context) => context.currentUser
+  },
+  Book: {
+    title: (root) => root.title,
+    published: (root) => root.published,
+    genres: (root) => [root.genres],
+    id: (root) => root.id,
+    author: async (root) => {
+      const author = await Author.findOne({ _id: root.author })
+      return {
+        name: author.name,
+        born: author.born
+      }
+    }
   },
   Author: {
     name: (root) => root.name,
