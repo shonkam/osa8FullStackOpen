@@ -22,7 +22,7 @@ const App = () => {
   if (authorResult.loading || bookResult.loading) {
     return <div>loading...</div>
   }
-
+  
   return (
     <div>
       <div>

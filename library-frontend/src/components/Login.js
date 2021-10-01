@@ -15,6 +15,7 @@ const Login = ({ show, setToken }) => {
       setToken(token)
       localStorage.setItem('user-token', token)
     }
+    // eslint-disable-next-line
   }, [result.data])
 
   const submit = async (event) => {

@@ -202,7 +202,7 @@ const resolvers = {
   Book: {
     title: (root) => root.title,
     published: (root) => root.published,
-    genres: (root) => [root.genres],
+    genres: (root) => root.genres,
     id: (root) => root.id,
     author: async (root) => {
       const author = await Author.findOne({ _id: root.author })
