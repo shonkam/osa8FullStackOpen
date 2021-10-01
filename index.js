@@ -223,26 +223,38 @@ const resolvers = {
   },
   Mutation: {
     addBook: async (root, args, context) => {
+      let book = ''
 
       if (!context.currentUser) {
         throw new AuthenticationError("not authenticated")
       }
 
-      const book = new Book({ ...args, id: Math.floor(Math.random() * 1000000) })
+      const author = await Author.findOne({ name: args.author })
 
-      /*
-      books = books.concat(book)
-
-      if (authors.map(p => p.name === book.author).includes(true)) {
-        return book
+      if (!author) {
+        const newAuthor = new Author({
+          name: args.author
+        })
+        const savedAuthor = await newAuthor.save()
+        console.log(savedAuthor)
+        book = new Book({
+          title: args.title,
+          author: savedAuthor.id,
+          published: args.published,
+          genres: args.genres,
+          id: Math.floor(Math.random() * 1000000)
+        })
       }
       else {
-        const newAuthor = {
-          name: args.author,
+        book = new Book({
+          title: args.title,
+          author: author._id,
+          published: args.published,
+          genres: args.genres,
           id: Math.floor(Math.random() * 1000000)
-        }
-        authors = authors.concat(newAuthor)
-        */
+        })
+      }
+
       try {
         return await book.save()
       } catch (err) {
@@ -267,15 +279,6 @@ const resolvers = {
           invalidArgs: args,
         })
       }
-      /*
-      const editedAuthor = authors.find(p => p.name === args.name)
-      if (!editedAuthor) {
-        return null
-      }
-      const updatedAuthor = { ...editedAuthor, born: args.setBornTo }
-      authors = authors.map(p => p.name === args.name ? updatedAuthor : p)
-      return updatedAuthor
-      */
     },
     createUser: async (root, args) => {
       const user = new User({ username: args.username, favoriteGenre: args.favoriteGenre })
