@@ -102,7 +102,7 @@ let books = [
 const typeDefs = gql`
 
 type Subscription {
-  addedBook: Book!
+  bookAdded: Book!
 }
 type User {
   username: String!
@@ -267,7 +267,7 @@ const resolvers = {
         })
       }
       
-      pubsub.publish('ADDED_BOOK', {addedBook: book})
+      pubsub.publish('BOOK_ADDED', {bookAdded: book})
       return book
     },
     editAuthor: async (root, args, context) => {
@@ -311,8 +311,8 @@ const resolvers = {
     }
   },
   Subscription: {
-    addedBook: {
-      subscribe: () => pubsub.asyncIterator(['ADDED_BOOK'])
+    bookAdded: {
+      subscribe: () => pubsub.asyncIterator(['BOOK_ADDED'])
     }
   }
 }
